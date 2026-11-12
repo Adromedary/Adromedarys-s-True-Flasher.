@@ -1,0 +1,7 @@
+bin/
+obj/
+*.exe
+*.pdb
+*.log
+.vs/
+TrueFlasher_*.log
