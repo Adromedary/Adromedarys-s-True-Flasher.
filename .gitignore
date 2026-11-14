@@ -5,3 +5,8 @@ obj/
 *.log
 .vs/
 TrueFlasher_*.log
+dist/
+AppDir/
+*.deb
+*.rpm
+*.AppImage

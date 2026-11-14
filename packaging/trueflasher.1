@@ -1,0 +1,83 @@
+.TH TRUEFLASHER 1 "2026-11-14" "trueflasher 1.0.0" "User Commands"
+.SH NAME
+trueflasher \- find the real capacity of fake USB flash drives
+.SH SYNOPSIS
+.B sudo trueflasher
+.RI [ options ]
+.br
+.B sudo trueflasher --device
+.I /dev/sdX
+.RI [ options ]
+.SH DESCRIPTION
+True Flasher measures how much data a USB flash drive or SD card really keeps.
+It writes self-identifying 4 KiB pages, re-reads them, and counts what survived.
+Run time is proportional to the real size, not the claimed size.
+.PP
+The test erases the selected drive. Only USB and SD/MMC drives are listed.
+The disk holding /, /boot, /home, /usr, /var or active swap is always protected.
+The drive is unmounted for you and opened with O_EXCL | O_DIRECT | O_SYNC.
+.SH OPTIONS
+.TP
+.BR --device " " /dev/sdX
+Test this drive (skips the picker; still asks to confirm).
+.TP
+.BR --quick
+Stage 1 only (about 1 minute). Recycling fakes can pass this; use the full test.
+.TP
+.BR --no-probe
+Skip stage 1.
+.TP
+.BR --check-mb " " N
+Spot-check interval during the fill, in MB (default 1024).
+.TP
+.BR --list
+List drives and exit.
+.TP
+.BR --fix-mb " " N
+Do not test: partition the drive to N MB (its real size from an earlier test).
+.TP
+.BR --label " " TEXT
+Volume label for the fix (default "USB <size>GB").
+.TP
+.BR --any-bus
+Also allow non-USB drives and loop devices (system disk stays protected).
+.TP
+.BR --no-color
+Plain output (also honours NO_COLOR).
+.SH FIX
+After a FAKE verdict, True Flasher can partition the drive to its real size
+with sfdisk, format it (mkfs.vfat up to 32 GB, mkfs.exfat above) and label it,
+e.g. USB 28GB. Needs sfdisk (util-linux/fdisk) plus dosfstools or exfatprogs.
+If one is missing, True Flasher prints the exact commands instead.
+.SH EXIT STATUS
+.TP
+.B 0
+Genuine, or fix completed with no problem found.
+.TP
+.B 3
+Fake drive detected.
+.TP
+.B 1
+Error (I/O failure, drive disappeared, fix tool missing).
+.TP
+.B 2
+Bad arguments.
+.SH EXAMPLES
+.TP
+Interactive picker (needs root for raw disk access):
+.B sudo trueflasher
+.TP
+Test a known device:
+.B sudo trueflasher --device /dev/sdb
+.TP
+Quick one minute probe only:
+.B sudo trueflasher --device /dev/sdb --quick
+.TP
+Repair a known fake to its measured size without re-testing:
+.B sudo trueflasher --device /dev/sdb --fix-mb 28733
+.SH SEE ALSO
+.BR sfdisk (8),
+.BR mkfs.vfat (8),
+.BR mkfs.exfat (8)
+.SH AUTHOR
+Adromedary. License: MIT.

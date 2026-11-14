@@ -86,6 +86,34 @@ A fake controller only loses data once you store more than its real flash can ho
 - Already tested earlier? Select the drive, press **Fix drive** and enter the safe size from the old report. No need to re-test.
 - What software *can't* change: the size the controller firmware reports. Disk Management will still show a "1 TB" disk with ~970 GB unallocated. Leave that space alone. Explorer only shows your partition.
 
+## Install on Linux
+
+No .NET runtime needed. Pick one:
+
+```
+# Debian / Ubuntu (.deb, x86_64 or arm64 to match your machine)
+sudo apt install ./trueflasher_1.0.0-1_amd64.deb
+# optional for the Fix step:
+sudo apt install dosfstools exfatprogs
+
+# Fedora / RHEL / openSUSE (.rpm)
+sudo dnf install ./trueflasher-1.0.0-1.x86_64.rpm
+# or: sudo zypper install ./trueflasher-1.0.0-1.x86_64.rpm
+
+# Any distro (AppImage)
+chmod +x TrueFlasher-1.0.0-x86_64.AppImage
+sudo ./TrueFlasher-1.0.0-x86_64.AppImage
+
+# Arch (builds latest git, live at https://aur.archlinux.org/packages/trueflasher-git)
+git clone https://aur.archlinux.org/trueflasher-git.git
+cd trueflasher-git && makepkg -si
+```
+
+Release assets (`*.deb`, `*.rpm`, `*.AppImage`) are built from git tags
+via `.github/workflows/release.yml`. To build packages yourself see
+`packaging/nfpm.yaml`, `packaging/rpm/trueflasher.spec`,
+`packaging/appimage/mk-appimage.sh` and `packaging/arch/PKGBUILD`.
+
 ## Linux
 
 ```
@@ -199,6 +227,13 @@ TrueFlasher.Linux.csproj   Linux build (self-contained single file)
 build.bat / build.sh       Windows / Linux build scripts
 tests/SimTests.cs          simulated fake drives (+ SimTests.csproj for .NET)
 assets/           icon artwork + make_icon.py (regenerates app.ico)
+packaging/
+  trueflasher.1 + .desktop  man page + desktop entry (shared by all packages)
+  nfpm.yaml       .deb + .rpm via nFPM
+  rpm/            native RPM spec for COPR/OBS
+  appimage/       AppImage build script
+  arch/           AUR trueflasher-git PKGBUILD + notes
+.github/workflows/release.yml  tag-driven release assets
 ```
 
 ## Limitations

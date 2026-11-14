@@ -1,0 +1,78 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            rid: linux-x64
+            nfpm_arch: amd64
+            app_arch: x86_64
+          - os: ubuntu-22.04-arm
+            rid: linux-arm64
+            nfpm_arch: arm64
+            app_arch: aarch64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build self-contained binary
+        run: |
+          if [ "${{ matrix.rid }}" = "linux-arm64" ]; then ./build.sh arm64; else ./build.sh; fi
+          ls -l bin/${{ matrix.rid }}/trueflasher
+
+      - name: Install packagers
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rpm lintian
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          curl -fsSL -o /tmp/appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$(uname -m).AppImage
+          chmod +x /tmp/appimagetool
+
+      - name: Build .deb and .rpm
+        run: |
+          mkdir -p dist
+          VER="${GITHUB_REF_NAME#v}"
+          sed -i -E "s/^version: .*/version: \"${VER}\"/; s/^arch: .*/arch: \"${{ matrix.nfpm_arch }}\"/" packaging/nfpm.yaml
+          grep -E "^(version|arch):" packaging/nfpm.yaml
+          # nfpm.yaml always reads bin/linux-x64/trueflasher, so normalise per-arch
+          if [ "${{ matrix.rid }}" = "linux-arm64" ]; then
+            mkdir -p bin/linux-x64
+            cp bin/linux-arm64/trueflasher bin/linux-x64/trueflasher
+          fi
+          nfpm package --config packaging/nfpm.yaml --packager deb --target dist/
+          nfpm package --config packaging/nfpm.yaml --packager rpm --target dist/
+          # restore real tree on arm so AppImage picks the right binary
+          if [ "${{ matrix.rid }}" = "linux-arm64" ]; then
+            rm bin/linux-x64/trueflasher
+          fi
+          git checkout -- packaging/nfpm.yaml
+          lintian dist/*.deb || true
+
+      - name: Build AppImage
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}" ./packaging/appimage/mk-appimage.sh
+          /tmp/appimagetool --version || true
+
+      - name: Upload release assets
+        run: |
+          cp "bin/${{ matrix.rid }}/trueflasher" "dist/trueflasher-${{ matrix.rid }}"
+          ls -l dist/
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*

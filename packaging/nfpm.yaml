@@ -1,0 +1,57 @@
+# nFPM config: builds .deb and .rpm from one file.
+# Version and arch are rewritten by CI from the git tag / matrix (see
+# .github/workflows/release.yml). For local builds, edit version/arch
+# below or pass them with sed, then run:
+#   ./build.sh                 # or ./build.sh arm64
+#   nfpm package --config packaging/nfpm.yaml --packager deb --target dist/
+# Arch mapping: amd64 build uses bin/linux-x64/trueflasher.
+# For arm64, CI copies bin/linux-arm64/trueflasher over that path first.
+name: "trueflasher"
+arch: "amd64"
+version: "1.0.0"
+release: "1"
+maintainer: "Adromedary"
+description: "Find the real capacity of fake USB flash drives"
+homepage: "https://github.com/9M2PJU/Adromedarys-s-True-Flasher."
+license: "MIT"
+section: "utils"
+priority: "optional"
+vendor: "Adromedary"
+
+depends:
+  - "util-linux"
+
+recommends:
+  - "dosfstools"
+  - "exfatprogs"
+
+contents:
+  - src: "bin/linux-x64/trueflasher"
+    dst: "/usr/bin/trueflasher"
+    file_info:
+      mode: 0755
+  - src: "packaging/trueflasher.1"
+    dst: "/usr/share/man/man1/trueflasher.1"
+    file_info:
+      mode: 0644
+  - src: "LICENSE"
+    dst: "/usr/share/doc/trueflasher/LICENSE"
+    file_info:
+      mode: 0644
+  - src: "README.md"
+    dst: "/usr/share/doc/trueflasher/README.md"
+    file_info:
+      mode: 0644
+  - src: "assets/icon_256.png"
+    dst: "/usr/share/icons/hicolor/256x256/apps/trueflasher.png"
+    file_info:
+      mode: 0644
+  - src: "packaging/trueflasher.desktop"
+    dst: "/usr/share/applications/trueflasher.desktop"
+    file_info:
+      mode: 0644
+
+# Map ARCH to the right binary before packaging.
+# nFPM has no conditionals, so the release workflow normalises the path:
+#   cp bin/linux-arm64/trueflasher bin/linux-x64/trueflasher   # when ARCH=arm64
+# See .github/workflows/release.yml.

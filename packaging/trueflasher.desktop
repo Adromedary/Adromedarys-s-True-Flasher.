@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=True Flasher
+Comment=Find the real capacity of fake USB flash drives
+Exec=trueflasher
+Icon=trueflasher
+Terminal=true
+Type=Application
+Categories=System;
+Keywords=usb;flash;fake;capacity;tester;drive;
+StartupNotify=false
+NoDisplay=false
